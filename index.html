@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ewaz Connect · تجربة ربط واتساب</title>
+<style>
+  /* Internal test page for WhatsApp Embedded Signup (Meta). No secrets here: the app ID and the
+     configuration ID are public values. The code it shows is exchanged on the owner's own machine. */
+  :root { --bg:#f6f7f9; --card:#fff; --text:#15171a; --muted:#5d636d; --line:#e3e6ea; --acc:#0b6b38; --err:#b42318; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.7 system-ui, "Segoe UI", Tahoma, sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  p.lead { color:var(--muted); margin:0 0 24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:12px 0 6px; }
+  input[type=text] { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; direction:ltr; text-align:left; }
+  .row { display:flex; gap:10px; align-items:center; margin-top:14px; }
+  button { font:inherit; font-weight:700; border:0; border-radius:8px; padding:12px 18px; cursor:pointer; background:var(--acc); color:#fff; min-height:44px; }
+  button.ghost { background:#eef0f3; color:var(--text); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  pre { background:#0f1115; color:#e6e6e6; border-radius:8px; padding:14px; overflow:auto; direction:ltr; text-align:left; font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:break-all; min-height:120px; }
+  .hint { color:var(--muted); font-size:14px; }
+  .ok { color:var(--acc); font-weight:700; } .bad { color:var(--err); font-weight:700; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ewaz Connect: تجربة ربط واتساب</h1>
+  <p class="lead">صفحة داخلية للتجربة. التاجر يضغط الزر، يربط رقمه من نافذة ميتا، وتطلع هنا الأرقام اللي نحتاجها.</p>
+
+  <section class="card">
+    <label for="appId">App ID (رقم تطبيق Ewaz Connect)</label>
+    <input id="appId" type="text" inputmode="numeric" autocomplete="off">
+    <label for="configId">Configuration ID (من Facebook Login for Business)</label>
+    <input id="configId" type="text" inputmode="numeric" autocomplete="off">
+    <label for="ver">Graph API version</label>
+    <input id="ver" type="text" value="v24.0" autocomplete="off">
+    <label class="row" style="font-weight:400"><input id="coex" type="checkbox"> الرقم عليه واتساب بزنس ويبي يكمل يستخدمه (Coexistence)</label>
+    <div class="row">
+      <button id="go" type="button" disabled>اربط واتساب</button>
+      <button id="copy" type="button" class="ghost">نسخ النتيجة</button>
+    </div>
+    <p class="hint" id="sdk">جاري تحميل أداة ميتا…</p>
+  </section>
+
+  <section class="card">
+    <strong>النتيجة</strong>
+    <p class="hint">الكود يعيش 5 دقايق بس. انسخه على طول للسكربت على جهازك.</p>
+    <pre id="log">ما فيه شي للحين.</pre>
+  </section>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const out = { code: null, waba_id: null, phone_number_id: null, business_id: null, event: null };
+  const save = () => { try { localStorage.setItem('ewc', JSON.stringify({ app: $('appId').value, cfg: $('configId').value, ver: $('ver').value })); } catch {} };
+  try { const s = JSON.parse(localStorage.getItem('ewc') || '{}'); if (s.app) $('appId').value = s.app; if (s.cfg) $('configId').value = s.cfg; if (s.ver) $('ver').value = s.ver; } catch {}
+  const q = new URLSearchParams(location.search);
+  if (q.get('app')) $('appId').value = q.get('app');
+  if (q.get('config')) $('configId').value = q.get('config');
+  const show = (note) => { $('log').textContent = (note ? note + '\n\n' : '') + JSON.stringify(out, null, 2); };
+
+  // Embedded Signup session info (Meta docs: type WA_EMBEDDED_SIGNUP, events FINISH / FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING / CANCEL / ERROR)
+  window.addEventListener('message', (event) => {
+    if (!event.origin.endsWith('facebook.com')) return;
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type !== 'WA_EMBEDDED_SIGNUP') return;
+      out.event = data.event;
+      if (data.data) { out.waba_id = data.data.waba_id || out.waba_id; out.phone_number_id = data.data.phone_number_id || out.phone_number_id; out.business_id = data.data.business_id || out.business_id; }
+      if (data.event === 'CANCEL') show('انقفلت النافذة قبل ما يكمل (الخطوة: ' + (data.data && data.data.current_step) + ')');
+      else if (data.event === 'ERROR') show('خطأ من ميتا: ' + (data.data && data.data.error_message));
+      else show('✓ خلص الربط في نافذة ميتا');
+    } catch { /* not JSON: ignore */ }
+  });
+
+  window.fbAsyncInit = function () { $('sdk').textContent = 'أداة ميتا جاهزة.'; $('go').disabled = false; };
+
+  $('go').addEventListener('click', () => {
+    const appId = $('appId').value.trim(), cfg = $('configId').value.trim(), ver = $('ver').value.trim() || 'v24.0';
+    if (!/^\d+$/.test(appId) || !/^\d+$/.test(cfg)) { show('اكتب App ID وConfiguration ID (أرقام بس).'); return; }
+    save();
+    FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: ver });
+    const extras = $('coex').checked
+      ? { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' }
+      : { setup: {} };
+    FB.login((response) => {
+      if (response.authResponse && response.authResponse.code) { out.code = response.authResponse.code; show('✓ وصل الكود. انسخ النتيجة للسكربت خلال 5 دقايق.'); }
+      else show('ما وصل كود (الربط ما كمل أو انقفلت النافذة).');
+    }, { config_id: cfg, response_type: 'code', override_default_response_type: true, extras });
+  });
+
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(JSON.stringify(out)); $('copy').textContent = 'انسخ ✓'; setTimeout(() => $('copy').textContent = 'نسخ النتيجة', 1500); } catch {}
+  });
+</script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+</body>
+</html>
