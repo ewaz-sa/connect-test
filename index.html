@@ -91,9 +91,8 @@
     if (!/^\d+$/.test(appId) || !/^\d+$/.test(cfg)) { show('اكتب App ID وConfiguration ID (أرقام بس).'); return; }
     save();
     FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: ver });
-    const extras = $('coex').checked
-      ? { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' }
-      : { setup: {} };
+    // Embedded Signup v4 (the only version since 15 Oct 2026): extras is empty, or featureType for coexistence.
+    const extras = $('coex').checked ? { featureType: 'whatsapp_business_app_onboarding' } : {};
     FB.login((response) => {
       if (response.authResponse && response.authResponse.code) { out.code = response.authResponse.code; show('✓ وصل الكود. انسخ النتيجة للسكربت خلال 5 دقايق.'); }
       else show('ما وصل كود (الربط ما كمل أو انقفلت النافذة).');
