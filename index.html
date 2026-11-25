@@ -55,7 +55,7 @@
 
 <script>
   const $ = (id) => document.getElementById(id);
-  const out = { code: null, waba_id: null, phone_number_id: null, business_id: null, event: null };
+  const out = { code: null, redirect_uri: location.href.split('#')[0], waba_id: null, phone_number_id: null, business_id: null, event: null };
   const save = () => { try { localStorage.setItem('ewc', JSON.stringify({ app: $('appId').value, cfg: $('configId').value, ver: $('ver').value })); } catch {} };
   try { const s = JSON.parse(localStorage.getItem('ewc') || '{}'); if (s.app) $('appId').value = s.app; if (s.cfg) $('configId').value = s.cfg; if (s.ver) $('ver').value = s.ver; } catch {}
   const q = new URLSearchParams(location.search);
