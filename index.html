@@ -77,6 +77,13 @@
     } catch { /* not JSON: ignore */ }
   });
 
+  // The JS SDK opens the dialog with its own redirect_uri; the code is bound to it, so record it.
+  const openWin = window.open.bind(window);
+  window.open = function (url, ...rest) {
+    try { const u = new URL(url, location.href); const r = u.searchParams.get('redirect_uri'); if (r) { out.redirect_uri = r; out.dialog = u.origin + u.pathname; } } catch {}
+    return openWin(url, ...rest);
+  };
+
   window.fbAsyncInit = function () { $('sdk').textContent = 'أداة ميتا جاهزة.'; $('go').disabled = false; };
 
   $('go').addEventListener('click', () => {
